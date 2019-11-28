@@ -1,4 +1,7 @@
 import  math
+from PyLineSearcher import GSSearch
+from PyLineSearcher import CFiSearch
+
 
 class CForwardDiff:
     def __init__(self, costfun, x, dim, eps = 1e-5, percent = 1e-5):
@@ -129,13 +132,17 @@ class CCentralDiff:
 
 class CGradDecent:
     def __init__(self, costfun, x0, dim, Gradient = 'Backward',LineSearch = 'FiS', MinNorm = 0.001, MaxIter = 1000):
-        self.__costfun = costfun
         self.__x0 = x0
         self.__dim = dim
+        self.__MaxIter = MaxIter
+        self.__MinNorm = MinNorm        
+        self.__costfun = costfun
+        self.__LineSearch = LineSearch
+        self.__Gradient = Gradient
 
     def set_costfun(self, costfun):
-        x = costfun
-        return x**4 - 14*(x**3) + 60*(x**2) -70*x 
+        self.__costfun = costfun
+        return self.__costfun
 
     def set_x(self, x0):
         self.__x0 = x0
@@ -147,10 +154,74 @@ class CGradDecent:
 
     def set_MaxIter(self, MaxIter):
         self.__MaxIter = MaxIter
+        return self.__MaxIter
 
     def set_MinNorm(self, MinNorm):
         self.__MinNorm = MinNorm
+        return self.__MinNorm
 
-    def RunOptimize(self):
-        i = 0
+    def RunOptimize(self):        
+        
+        x = self.__x0
+        k = 0
+        d = 1        
+        fun = self.__costfun
+
+        if (self.__LineSearch == "FiS"):
+            LineSearch = CFiSearch(fun, x, d, eps=0.1)
+        else:
+            LineSearch = GSSearch(fun, x, d)
+
+        if (self.__Gradient == 'Forward'):
+            Diff = CForwardDiff(fun, x, self.__dim)
+        elif (self.__Gradient == 'Backward'):
+            Diff = CBackwardDiff(fun, x, self.__dim)
+        else:
+            Diff = CCentralDiff(fun, x, self.__dim)
+
+        grad_Magnitude = math.inf
+
+        while (k < self.__MaxIter):
+            print('Optimizer Iter[', k, ']')
+
+            if (k!=0):
+                Diff.x = x
+
+            print('Getting Gradient')
+            grad = Diff.GetGrad(x)
+
+            grad_Magnitude = math.sqrt(math.fsum([i*i for i in grad]))
+            print('||Gradient||: ',grad_Magnitude)
+            if (grad_Magnitude < self.__MinNorm):
+                print("Gradient < MinNorm", grad_Magnitude)
+                return x
+
+            d = [-i for i in grad]            
+            
+            if (k != 0):
+                LineSearch.set_x(x)
+            
+            # LineSearch.d = d
+            LineSearch.set_d(d)
+
+            print('LineSearch')
+            alpha = LineSearch.RunSearch()
+            #timeEnd = time.time()
+            #print('Run Search Cost: ', timeEnd - timeStart)
+            print('step size', alpha)
+            x = [x[i] + alpha * d[i] for i in range(0, len(x))]
+            # print('X:', x)
+            #print('loss', fun(x))
+            
+
+            k += 1
+
+            
+
+        return x
+
+
+
+
+
 

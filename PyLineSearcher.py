@@ -13,8 +13,8 @@ class GSSearch:
         
 
     def set_costfun(self, costfun):
-        x = costfun
-        return x**4 - 14*(x**3) + 60*(x**2) -70*x 
+        self.__costfun = costfun
+        return self.__costfun 
 
     def set_x(self, x):
         self.__x = x
@@ -28,8 +28,7 @@ class GSSearch:
         self.__eps =eps
         return self.__eps
     
-    def RunSearch(self):
-        
+    def RunSearch(self):        
         alpha_u = self.__alpha_u
         alpha_l = self.__alpha_l        
         x_star = 0
@@ -37,18 +36,18 @@ class GSSearch:
         self.__Phase2(alpha_u, alpha_l)
         x_star = self.__x        
         print('X_star = {}'.format(x_star))
-        print('f(X_star) = {}'.format(self.set_costfun(x_star)))
+        print('f(X_star) = {}'.format(self.__costfun(x_star)))
 
  
 
     def __Phase1(self):
-        print('---------------- Phase 1 Start ----------------')
+        print('---------------- Phase 1 Start ----------------')        
         delta = self.__eps
         g = 0
         interval = 0
-        alpha_u = 0
-        alpha_l = 0
-        alpha_i = 0
+        alpha_u = self.__costfun([self.__x[i] + g * self.__d[i] for i in range(0, len(self.__d))])
+        alpha_l = self.__costfun([self.__x[i] + g * self.__d[i] for i in range(0, len(self.__d))])
+        alpha_i = self.__costfun([self.__x[i] + g * self.__d[i] for i in range(0, len(self.__d))])
 
         while True:
             for i in range(g, g+3):
@@ -63,7 +62,7 @@ class GSSearch:
                 sum_i = delta*1.618**i
                 alpha_i = alpha_i + sum_i
 
-            if self.set_costfun(self.__eps) >= self.set_costfun(0):
+            if self.__costfun(self.__eps) >= self.__costfun(0):
                 interval = self.__eps
                 alpha_u = self.__eps
                 alpha_l = 0
@@ -72,7 +71,7 @@ class GSSearch:
                 return self.__alpha_u, self.__alpha_l
 
 
-            if self.set_costfun(alpha_i) < self.set_costfun(alpha_u) and self.set_costfun(alpha_i) < self.set_costfun(alpha_l):
+            if self.__costfun(alpha_i) < self.__costfun(alpha_u) and self.__costfun(alpha_i) < self.__costfun(alpha_l):
                 interval = alpha_u - alpha_l
                 
                 #print('g ={}'.format(g))
@@ -106,14 +105,14 @@ class GSSearch:
             #f(a1) = self.Equations(a1)
             b1 = alpha_l + (1 - rho) * (alpha_u - alpha_l)
             #f(b1) = self.Equations(b1)
-            if self.set_costfun(a1) < self.set_costfun(b1):
+            if self.__costfun(a1) < self.__costfun(b1):
                 alpha_u = b1
                 #b1 = a1           
-            if self.set_costfun(a1) > self.set_costfun(b1):
+            if self.__costfun(a1) > self.__costfun(b1):
                 alpha_l = a1
                 #a1 = b1
 
-            if self.set_costfun(a1) == self.set_costfun(b1):
+            if self.__costfun(a1) == self.__costfun(b1):
                 alpha_l = a1
                 alpha_u = b1
                 iteration_number += 1
@@ -144,8 +143,8 @@ class CFiSearch:
         
 
     def set_costfun(self, costfun):
-        x = costfun
-        return (-x*(108-x**2))/4 
+        self.__costfun = costfun
+        return self.__costfun 
 
     def set_x(self, x):
         self.__x = x
@@ -159,8 +158,7 @@ class CFiSearch:
         self.__eps =eps
         return self.__eps
     
-    def RunSearch(self):
-        
+    def RunSearch(self):        
         alpha_u = self.__alpha_u
         alpha_l = self.__alpha_l        
         x_star = 0
@@ -168,17 +166,28 @@ class CFiSearch:
         self.__Phase2(alpha_u, alpha_l)
         x_star = self.__x        
         print('X_star = {}'.format(x_star))
-        print('f(X_star) = {}'.format(self.set_costfun(x_star)))
-
+        return x_star
 
     def __Phase1(self):
-        print('---------------- Phase 1 Start ----------------')
+        
         delta = self.__eps
         g = 0
-        interval = 0
-        alpha_u = 0
-        alpha_l = 0
-        alpha_i = 0
+        interval = 0                
+        alpha_u = self.__costfun([self.__x[i] + g * self.__d[i] for i in range(0, len(self.__d))])
+        alpha_l = self.__costfun([self.__x[i] + g * self.__d[i] for i in range(0, len(self.__d))])
+        alpha_i = self.__costfun([self.__x[i] + g * self.__d[i] for i in range(0, len(self.__d))])
+        f_of_zero = self.__costfun([self.__x[i] + 0 * self.__d[i] for i in range(0, len(self.__d))])
+        f_of_delta = self.__costfun([self.__x[i] + delta * self.__d[i] for i in range(0, len(self.__d))])
+
+        if f_of_delta >= f_of_zero:
+                interval = self.__eps
+                alpha_u = f_of_delta
+                alpha_l = f_of_zero
+                self.__alpha_u = alpha_u
+                self.__alpha_l = alpha_l
+                return self.__alpha_u, self.__alpha_l
+
+        print('---------------- Phase 1 Start ----------------')
 
         while True:
             for i in range(g, g+3):
@@ -193,16 +202,10 @@ class CFiSearch:
                 sum_i = delta*1.618**i
                 alpha_i = alpha_i + sum_i
 
-            if self.set_costfun(self.__eps) >= self.set_costfun(0):
-                interval = self.__eps
-                alpha_u = self.__eps
-                alpha_l = 0
-                self.__alpha_u = alpha_u
-                self.__alpha_l = alpha_l
-                return self.__alpha_u, self.__alpha_l
-
-
-            if self.set_costfun(alpha_i) < self.set_costfun(alpha_u) and self.set_costfun(alpha_i) < self.set_costfun(alpha_l):
+            
+            print(alpha_u)
+            
+            if self.__costfun([self.__x[i] + alpha_i * self.__d[i] for i in range(0, len(self.__d))]) < self.__costfun([self.__x[i] + alpha_u * self.__d[i] for i in range(0, len(self.__d))]) and self.__costfun([self.__x[i] + alpha_i * self.__d[i] for i in range(0, len(self.__d))]) < self.__costfun([self.__x[i] + alpha_l * self.__d[i] for i in range(0, len(self.__d))]):
                 interval = alpha_u - alpha_l
                 
                 #print('g ={}'.format(g))
@@ -258,14 +261,14 @@ class CFiSearch:
             #f(a1) = self.Equations(a1)
             b1 = alpha_l + (1 - rho) * (alpha_u - alpha_l)
             #f(b1) = self.Equations(b1)
-            if self.set_costfun(a1) < self.set_costfun(b1):
+            if self.__costfun([self.__x[i] + a1 * self.__d[i] for i in range(0, len(self.__d))]) < self.__costfun([self.__x[i] + b1 * self.__d[i] for i in range(0, len(self.__d))]):
                 alpha_u = b1
                 #b1 = a1           
-            if self.set_costfun(a1) > self.set_costfun(b1):
+            if self.__costfun([self.__x[i] + a1 * self.__d[i] for i in range(0, len(self.__d))]) > self.__costfun([self.__x[i] + b1 * self.__d[i] for i in range(0, len(self.__d))]):
                 alpha_l = a1
                 #a1 = b1
 
-            if self.set_costfun(a1) == self.set_costfun(b1):
+            if self.__costfun([self.__x[i] + a1 * self.__d[i] for i in range(0, len(self.__d))]) == self.__costfun([self.__x[i] + b1 * self.__d[i] for i in range(0, len(self.__d))]):
                 alpha_l = a1
                 alpha_u = b1
                 iteration_number += 1
