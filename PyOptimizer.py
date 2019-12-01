@@ -4,7 +4,7 @@ from PyLineSearcher import CFiSearch
 
 
 class CForwardDiff:
-    def __init__(self, costfun, x, dim, eps = 1e-5, percent = 1e-5):
+    def __init__(self, costfun, x, dim, eps = 1e-5, percent = 1e-4):
         self.__costfun = costfun
         self.__x = x
         self.__dim = dim
@@ -31,27 +31,27 @@ class CForwardDiff:
     def set_percent(self, percent):
         self.__percent = percent
 
-    def GetGrad(self, x):
-        
+    def GetGrad(self, x):   
         d = []
-        fun = self.__costfun        
-        g = fun(x)        
-        x0 = self.__x.copy()   
-        for index in range(0, self.__dim):                     
-            h = x0[index] * self.__percent + self.__eps
-            x[index] = x0[index] + h                     
-            d.append((fun(x)-g)/h)
-            # print(x)
-            x = x0
-        print(d)
+        fun = self.__costfun          
+        x0 = self.__x.copy()
+        x1 = self.__x.copy()
+        g = fun(x0)        
+        for index in range(0, len(x)):                                   
+            h = x[index] * self.__percent + self.__eps            
+            x1[index] = x1[index] + h
+            print('x',x1)            
+            d.append((fun(x1) - g)/h)
+            x1[index] = x0[index]
+        print('d', d)        
         return d
 
 class CBackwardDiff:
-    def __init__(self, costfun, x, dim, eps = 1e-5, percent = 1e-5):
+    def __init__(self, costfun, x, dim, eps = 1e-5, percent = 1e-4):
         self.__costfun = costfun
         self.__x = x
         self.__dim = dim
-        self.__eps =eps
+        self.__eps = eps
         self.__percent = percent
 
 
@@ -75,22 +75,22 @@ class CBackwardDiff:
         self.__percent = percent
 
     def GetGrad(self, x):
-        
+        self.__x = x
         d = []
-        fun = self.__costfun        
-        g = fun(x)        
-        x0 = self.__x.copy()   
-        for index in range(0, self.__dim):                     
-            h = x0[index] * self.__percent + self.__eps
-            x[index] = x0[index] - h                     
-            d.append((g - fun(x) )/ h )
-            # print(x)
-            x = x0
-        print(d)
+        fun = self.__costfun         
+        x0 = self.__x.copy()
+        x1 = self.__x.copy()
+        g = fun(x0)        
+        for index in range(0, len(x)):                     
+            h = x[index] * self.__percent + self.__eps
+            x1[index] = x1[index] - h                     
+            d.append((g - fun(x1) )/ h )
+            x1[index] = x0[index]                   
+        print('d', d)
         return d
 
 class CCentralDiff:
-    def __init__(self, costfun, x, dim, eps = 1e-5, percent = 1e-5):
+    def __init__(self, costfun, x, dim, eps = 1e-5, percent = 1e-4):
         self.__costfun = costfun
         self.__x = x
         self.__dim = dim
@@ -117,21 +117,29 @@ class CCentralDiff:
     def set_percent(self, percent):
         self.__percent = percent
 
-    def GetGrad(self, x):
+    def GetGrad(self, x):        
         d = []
-        fun = self.__costfun
-        for index in range(0, self.__dim):
-            x_forward = self.__x.copy()
-            x_backward = self.__x.copy()
-            h = x_forward[index] * self.__percent + self.__eps
-            x_forward[index] = x_forward[index] + h/2
-            x_backward[index] = x_backward[index] - h/2
-            d.append((fun(x_forward)-fun(x_backward))/h)
-        print(d)
+        print('start')
+        fun = self.__costfun        
+        self.__x = x
+        x_forward = self.__x.copy()        
+        x_backward = self.__x.copy()
+        x_0 = self.__x.copy()
+        for index in range(0, len(x)):            
+            h = x_0[index] * self.__percent + self.__eps
+            x_forward[index] = x_forward[index] + (h/2)                     
+            x_backward[index] = x_backward[index] - (h/2)            
+            # print('h', h)
+            # print('x_forward',x_forward)
+            # print('x_backward', x_backward)
+            d.append((fun(x_forward)-fun(x_backward))/h)      
+            x_forward[index] = x_0[index]             
+            x_backward[index] = x_0[index]              
+        print('d', d)
         return d
 
 class CGradDecent:
-    def __init__(self, costfun, x0, dim, Gradient = 'Backward',LineSearch = 'FiS', MinNorm = 0.001, MaxIter = 1000):
+    def __init__(self, costfun, x0, dim, Gradient = 'Backward1',LineSearch = 'FiS', MinNorm = 0.0001, MaxIter = 1000):
         self.__x0 = x0
         self.__dim = dim
         self.__MaxIter = MaxIter
@@ -185,8 +193,8 @@ class CGradDecent:
             print('Optimizer Iter[', k, ']')
 
             if (k!=0):
-                Diff.x = x
-
+                Diff.set_x = x
+            # print('x0',x)
             print('Getting Gradient')
             grad = Diff.GetGrad(x)
 
@@ -194,6 +202,8 @@ class CGradDecent:
             print('||Gradient||: ',grad_Magnitude)
             if (grad_Magnitude < self.__MinNorm):
                 print("Gradient < MinNorm", grad_Magnitude)
+                print('x_star', x)
+                print('f(x_star)', self.__costfun(x))
                 return x
 
             d = [-i for i in grad]            
@@ -203,21 +213,21 @@ class CGradDecent:
             
             # LineSearch.d = d
             LineSearch.set_d(d)
-
+            #timeStart = time.time()
             print('LineSearch')
             alpha = LineSearch.RunSearch()
             #timeEnd = time.time()
             #print('Run Search Cost: ', timeEnd - timeStart)
             print('step size', alpha)
-            x = [x[i] + alpha * d[i] for i in range(0, len(x))]
-            # print('X:', x)
+            x = [x[i] + alpha * d[i]for i in range(0, len(x))]            
+            print('X:', x)
             #print('loss', fun(x))
             
 
             k += 1
 
             
-
+        
         return x
 
 
