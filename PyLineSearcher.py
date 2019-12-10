@@ -91,7 +91,7 @@ class GSSearch:
                 g +=1         
 
     def __Phase2(self, alpha_u, alpha_l):
-        rho = 0.382
+        rho = 0.38197
         delta = self.__eps
         alpha_u = self.__alpha_u
         alpha_l = self.__alpha_l        
@@ -185,6 +185,7 @@ class CFiSearch:
         alpha_i = self.__costfun([self.__x[i] + g * self.__d[i] for i in range(0, len(self.__d))])
 
         while True:
+            print(g)
             for i in range(g, g+3):                
                 sum_u = delta*1.618**i
                 alpha_u = alpha_u + sum_u                
@@ -221,9 +222,9 @@ class CFiSearch:
 
             
             else:
-                print('alpha_i = {}'.format(alpha_i))
-                print('alpha_u = {}'.format(alpha_u))
-                print('alpha_l = {}'.format(alpha_l))
+                # print('alpha_i = {}'.format(alpha_i))
+                # print('alpha_u = {}'.format(alpha_u))
+                # print('alpha_l = {}'.format(alpha_l))
                 g = g + 1
                 
 
@@ -242,7 +243,7 @@ class CFiSearch:
                 i += 1
             return i - 1
 
-        epsilon = 0.05
+        epsilon = self.__eps
         rho = 0.5 - epsilon
         iteration_number = 0
 

@@ -139,7 +139,7 @@ class CCentralDiff:
         return d
 
 class CGradDecent:
-    def __init__(self, costfun, x0, dim, Gradient = 'Backward1',LineSearch = 'FiS', MinNorm = 0.0001, MaxIter = 1000):
+    def __init__(self, costfun, x0, dim, Gradient = 'Backward',LineSearch = 'FiS', MinNorm = 0.001, MaxIter = 1000):
         self.__x0 = x0
         self.__dim = dim
         self.__MaxIter = MaxIter
@@ -176,7 +176,7 @@ class CGradDecent:
         fun = self.__costfun
 
         if (self.__LineSearch == "FiS"):
-            LineSearch = CFiSearch(fun, x, d, eps=0.1)
+            LineSearch = CFiSearch(fun, x, d, eps=0.01)
         else:
             LineSearch = GSSearch(fun, x, d)
 
